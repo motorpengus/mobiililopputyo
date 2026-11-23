@@ -29,3 +29,22 @@ export const addTransaction = (item: Omit<Transaction, 'id'>) => {
 export const getTransactions = (): Transaction[] => {
   return db.getAllSync<Transaction>('SELECT * FROM transactions ORDER BY date DESC, id DESC');
 };
+export const deleteTransaction = (id: number) => {
+  db.runSync('DELETE FROM transactions WHERE id = ?', [id]);
+};
+export interface CategorySummary {
+  category: string;
+  total: number;
+}
+
+export const getMonthlySummary = (yearMonth: string): CategorySummary[] => {
+  // yearMonth on muodossa "YYYY-MM", esim. "2026-11"
+  return db.getAllSync<CategorySummary>(
+    `SELECT category, SUM(amount) as total 
+     FROM transactions 
+     WHERE type = 'expense' AND date LIKE ? 
+     GROUP BY category 
+     ORDER BY total DESC`,
+    [`${yearMonth}%`]
+  );
+};
